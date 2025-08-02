@@ -1,17 +1,17 @@
 "use client";
 
-import { TransactionLog } from "../type";
-import { PlayIcon, PauseIcon, DownloadIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import {TransactionLog} from "../type";
+import {motion, AnimatePresence} from "framer-motion";
+import {PlayIcon, PauseIcon, DownloadIcon} from "lucide-react";
+import {useRef, useState, useEffect} from "react";
 
 type Props = {
     logs: TransactionLog[];
 };
 
-export default function TransactionTable({ logs }: Props) {
+export default function TransactionTable({logs}: Props) {
     const [playingId, setPlayingId] = useState<Number | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-
     const handlePlay = async (log: TransactionLog) => {
         if (audioRef.current) {
             audioRef.current.pause();
@@ -51,41 +51,50 @@ export default function TransactionTable({ logs }: Props) {
                 </tr>
                 </thead>
                 <tbody>
-                {logs.map((log) => (
-                    <tr key={log.id} className="border-t">
-                        <td className="px-4 py-2 font-semibold text-green-700">{log.amount.toFixed(2)} ฿</td>
-                        <td className="px-4 py-2">{log.source}</td>
-                        <td className="px-4 py-2">{log.note || "-"}</td>
-                        <td className="px-4 py-2 text-gray-500">
-                            {new Date(log.timestamp).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2">
-                            <div className="flex gap-2 items-center">
-                                {log.sound_url && (
-                                    <button
-                                        onClick={() => handlePlay(log)}
-                                        className="p-1 rounded bg-blue-500 text-white hover:bg-blue-600"
-                                    >
-                                        {playingId === log.id ? (
-                                            <PauseIcon className="w-4 h-4" />
-                                        ) : (
-                                            <PlayIcon className="w-4 h-4" />
-                                        )}
-                                    </button>
-                                )}
-                                {log.sound_url && (
-                                    <a
-                                        href={log.sound_url}
-                                        download
-                                        className="p-1 rounded bg-gray-300 text-gray-800 hover:bg-gray-400"
-                                    >
-                                        <DownloadIcon className="w-4 h-4" />
-                                    </a>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                ))}
+                <AnimatePresence>
+                    {logs.map((log) => (
+                        <motion.tr
+                            key={log.id}
+                            initial={{opacity: 0, y: -10}}
+                            animate={{opacity: 1, y: 0}}
+                            exit={{opacity: 0, y: 10}}
+                            transition={{duration: 0.3}}
+                            className={`bg-white`}
+                        >
+                            <td className="px-4 py-2 font-semibold text-green-700">{log.amount.toFixed(2)} ฿</td>
+                            <td className="px-4 py-2">{log.source}</td>
+                            <td className="px-4 py-2">{log.note || "-"}</td>
+                            <td className="px-4 py-2 text-gray-500">
+                                {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-2">
+                                <div className="flex gap-2 items-center">
+                                    {log.sound_url && (
+                                        <button
+                                            onClick={() => handlePlay(log)}
+                                            className="p-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                                        >
+                                            {playingId === log.id ? (
+                                                <PauseIcon className="w-4 h-4"/>
+                                            ) : (
+                                                <PlayIcon className="w-4 h-4"/>
+                                            )}
+                                        </button>
+                                    )}
+                                    {log.sound_url && (
+                                        <a
+                                            href={log.sound_url}
+                                            download
+                                            className="p-1 rounded bg-gray-300 text-gray-800 hover:bg-gray-400"
+                                        >
+                                            <DownloadIcon className="w-4 h-4"/>
+                                        </a>
+                                    )}
+                                </div>
+                            </td>
+                        </motion.tr>
+                    ))}
+                </AnimatePresence>
                 </tbody>
             </table>
         </div>

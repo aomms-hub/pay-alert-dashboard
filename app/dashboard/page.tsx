@@ -6,6 +6,8 @@ import TransactionCard from "../dashboard/components/transaction_card";
 import TransactionTable from "../dashboard/components/transaction_table";
 import {TransactionLog, ApiResponse} from "./type";
 import {getTransactionLogUrl} from "../config";
+import { RotateCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardPage() {
     const [logs, setLogs] = useState<TransactionLog[]>([]);
@@ -49,9 +51,24 @@ export default function DashboardPage() {
                         <button
                             onClick={fetchLogs}
                             disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                         >
-                            {loading ? "Loading..." : "Refresh"}
+                            {loading ? (
+                                <>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                    >
+                                        <RotateCw className="w-4 h-4" />
+                                    </motion.div>
+                                    Loading...
+                                </>
+                            ) : (
+                                <>
+                                    <RotateCw className="w-4 h-4" />
+                                    Refresh
+                                </>
+                            )}
                         </button>
                         <button
                             onClick={() => setViewMode(viewMode === "card" ? "table" : "card")}
@@ -67,13 +84,44 @@ export default function DashboardPage() {
                 {logs.length === 0 && !loading && <p className="text-gray-500">No transactions found.</p>}
 
                 <div className="flex flex-col gap-4">
-                    {viewMode === "card" ? (
-                        <div className="flex flex-col gap-4">
-                            {logs.map((log) => <TransactionCard key={log.id} log={log} />)}
-                        </div>
-                    ) : (
-                        <TransactionTable logs={logs} />
-                    )}
+                    <AnimatePresence mode="wait">
+                        {viewMode === "card" ? (
+                            <motion.div
+                                key="card"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+                            >
+                                <AnimatePresence>
+                                    {logs.map((log) => (
+                                        <motion.div
+                                            key={log.id}
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.9 }}
+                                            transition={{ duration: 0.25 }}
+                                        >
+                                            <TransactionCard log={log} />
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="table"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <TransactionTable logs={logs} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                 </div>
             </div>
         </div>
