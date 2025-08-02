@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useEffect, useState} from "react";
+import { LayoutGridIcon, TableIcon } from "lucide-react";
 import Header from "./components/header";
 import TransactionCard from "../dashboard/components/transaction_card";
 import TransactionTable from "../dashboard/components/transaction_table";
@@ -105,9 +106,14 @@ export default function DashboardPage() {
                         </button>
                         <button
                             onClick={() => setViewMode(viewMode === "card" ? "table" : "card")}
-                            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                            className="p-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+                            title={viewMode === "card" ? "Switch to Table View" : "Switch to Card View"}
                         >
-                            {viewMode === "card" ? "Table View" : "Card View"}
+                            {viewMode === "card" ? (
+                                <TableIcon className="w-5 h-5" />
+                            ) : (
+                                <LayoutGridIcon className="w-5 h-5" />
+                            )}
                         </button>
                     </div>
                 </div>
