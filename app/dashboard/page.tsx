@@ -14,7 +14,6 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<"card" | "table">("card");
-
     const fetchLogs = async () => {
         setLoading(true);
         setError(null);
@@ -29,8 +28,37 @@ export default function DashboardPage() {
             setLoading(false);
         }
     };
+    const totalAmount = logs.reduce((sum, log) => sum + log.amount, 0);
+    const exportToCSV = () => {
+        if (!logs.length) return alert("ไม่มีข้อมูลให้ดาวน์โหลด");
 
-    // Auto fetch every 30 seconds
+        const headers = ["ID", "Amount", "Source", "Note", "Date", "Time"];
+        const rows = logs.map((log) => [
+            log.id,
+            log.amount.toFixed(2),
+            log.source,
+            log.note ? log.note.replace(/,/g, " ") : "",
+            new Date(log.timestamp).toLocaleDateString(),
+            new Date(log.timestamp).toLocaleTimeString(),
+        ]);
+
+        const csvContent =
+            [headers, ...rows]
+                .map((e) => e.join(","))
+                .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `transaction_logs_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     useEffect(() => {
         fetchLogs();
         const interval = setInterval(() => {
@@ -38,8 +66,6 @@ export default function DashboardPage() {
         }, 30000);
         return () => clearInterval(interval);
     }, []);
-
-    const totalAmount = logs.reduce((sum, log) => sum + log.amount, 0);
 
     return (
         <div className="max-w-6xl mx-auto p-6 font-sans">
@@ -69,6 +95,13 @@ export default function DashboardPage() {
                                     Refresh
                                 </>
                             )}
+                        </button>
+                        <button
+                            onClick={exportToCSV}
+                            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                            title="Export"
+                        >
+                            Export CSV
                         </button>
                         <button
                             onClick={() => setViewMode(viewMode === "card" ? "table" : "card")}
