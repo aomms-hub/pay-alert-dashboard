@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Header from "./components/header";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_CONFIG } from "./config";
 
 type ApiResponse = {
   status: {
@@ -40,7 +41,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchLogs() {
       try {
-        const res = await fetch("http://localhost:8000/dashboard/transaction_log_list");
+        const res = await fetch(API_CONFIG.baseUrl + API_CONFIG.transactionLogEndpoint);
         if (!res.ok) throw new Error("Failed to fetch transaction logs");
         const json: ApiResponse = await res.json();
         setLogs(json.data);
