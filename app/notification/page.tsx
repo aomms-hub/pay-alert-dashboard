@@ -107,7 +107,7 @@ export default function NotificationPage() {
                         className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 active:scale-95 transition-transform duration-150"
                         onClick={() => setReadyToPlay(true)}
                     >
-                        🔔 คลิกเพื่อเริ่มรับแจ้งเตือน Real-time
+                        🔔 คลิกเพื่อเริ่มรับการแจ้งเตือน Real-time
                     </button>
                 )}
 
