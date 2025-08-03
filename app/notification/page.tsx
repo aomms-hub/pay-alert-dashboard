@@ -20,14 +20,23 @@ export default function NotificationPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const ws = useRef<WebSocket | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
 
     const unlockAudio = () => {
-        const context = new AudioContext();
-        if (context.state === 'suspended') {
-            context.resume().then(() => {
-                console.log('AudioContext resumed on user interaction');
-            });
+        if (!audioContextRef.current) {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            audioContextRef.current = new AudioCtx();
         }
+
+        if (!audioRef.current) {
+            audioRef.current = new Audio();
+        }
+
+        if (audioContextRef.current.state === "suspended") {
+            audioContextRef.current.resume();
+        }
+
+        console.log("🔓 Audio system unlocked!");
     };
 
     const connectWebSocket = () => {
@@ -64,42 +73,50 @@ export default function NotificationPage() {
             console.error("WebSocket error", error);
         };
     };
+
     useEffect(() => {
         if (readyToPlay) {
             connectWebSocket();
-            unlockAudio();
         }
         return () => {
             ws.current?.close();
         };
     }, [readyToPlay]);
-
     useEffect(() => {
-        if (!isPlaying && soundQueue.length > 0) {
-            const url = soundQueue[0];
-            const audio = new Audio(url);
-            audioRef.current = audio;
-            setIsPlaying(true);
+        const playNext = async () => {
+            if (!isPlaying && soundQueue.length > 0 && audioRef.current) {
+                const url = soundQueue[0];
 
-            audio.addEventListener("ended", () => {
-                setIsPlaying(false);
-                setSoundQueue((queue) => queue.slice(1));
-            });
+                if (audioContextRef.current?.state === "suspended") {
+                    await audioContextRef.current.resume();
+                }
 
-            audio.addEventListener("error", () => {
-                setIsPlaying(false);
-                setSoundQueue((queue) => queue.slice(1));
-            });
+                audioRef.current.src = url;
+                setIsPlaying(true);
 
-            audio.play().catch((err) => {
-                console.warn("Audio play failed:", err);
-                setIsPlaying(false);
-                setSoundQueue((queue) => queue.slice(1));
-            });
-        }
-        unlockAudio()
+                try {
+                    await audioRef.current.play();
+                } catch (err) {
+                    console.warn("🔇 iOS blocked audio playback:", err);
+                    setIsPlaying(false);
+                    setSoundQueue((queue) => queue.slice(1));
+                    return;
+                }
+
+                audioRef.current.onended = () => {
+                    setIsPlaying(false);
+                    setSoundQueue((queue) => queue.slice(1));
+                };
+
+                audioRef.current.onerror = () => {
+                    setIsPlaying(false);
+                    setSoundQueue((queue) => queue.slice(1));
+                };
+            }
+        };
+
+        playNext();
     }, [soundQueue, isPlaying]);
-
     return (
         <div className="max-w-xl mx-auto p-6 font-sans ">
             {/*<h1 className="text-3xl font-extrabold mb-2">🔔 Notification Dashboard </h1>*/}
@@ -109,7 +126,10 @@ export default function NotificationPage() {
                 {!readyToPlay && (
                     <button
                         className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 active:scale-95 transition-transform duration-150"
-                        onClick={() => setReadyToPlay(true)}
+                        onClick={() => {
+                            unlockAudio();
+                            setReadyToPlay(true)
+                        }}
                     >
                         🔔 คลิกเพื่อเริ่มรับการแจ้งเตือน Real-time
                     </button>
