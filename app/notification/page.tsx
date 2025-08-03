@@ -20,13 +20,16 @@ export default function NotificationPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const ws = useRef<WebSocket | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const context = new AudioContext();
 
     const unlockAudio = () => {
-        const audio = new Audio();
-        audio.src = "";
-        audio.play().catch(() => {
-        });
+        if (context.state === 'suspended') {
+            context.resume().then(() => {
+                console.log('AudioContext resumed on user interaction');
+            });
+        }
     };
+
     const connectWebSocket = () => {
         ws.current = new WebSocket(getWebSocket());
 
@@ -94,6 +97,7 @@ export default function NotificationPage() {
                 setSoundQueue((queue) => queue.slice(1));
             });
         }
+        unlockAudio()
     }, [soundQueue, isPlaying]);
 
     return (
