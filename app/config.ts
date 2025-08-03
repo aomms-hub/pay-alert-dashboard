@@ -4,8 +4,7 @@ export const API_CONFIG = {
 };
 
 export const HOST = {
-    // host_domain: "pay-alert-composite-production.up.railway.app"
-    host_domain: "127.0.0.1:8000"
+    host_domain: "pay-alert-composite-production.up.railway.app"
 }
 
 export const getTransactionLogUrl = () =>
