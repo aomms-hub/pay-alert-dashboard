@@ -20,9 +20,9 @@ export default function NotificationPage() {
     const [isPlaying, setIsPlaying] = useState(false);
     const ws = useRef<WebSocket | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const context = new AudioContext();
 
     const unlockAudio = () => {
+        const context = new AudioContext();
         if (context.state === 'suspended') {
             context.resume().then(() => {
                 console.log('AudioContext resumed on user interaction');
