@@ -15,12 +15,26 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<"card" | "table">("card");
+    const [startDate, setStartDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d.toISOString().split("T")[0];
+    });
+    const [endDate, setEndDate] = useState(() => {
+        return new Date().toISOString().split("T")[0];
+    });
+
     const fetchLogs = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(getTransactionLogUrl(), {cache: "no-store"});
+            const url = new URL(getTransactionLogUrl());
+            url.searchParams.set("start_date", startDate);
+            url.searchParams.set("end_date", endDate);
+
+            const res = await fetch(url.toString(), { cache: "no-store" });
             if (!res.ok) throw new Error("Failed to fetch logs");
+
             const json: ApiResponse = await res.json();
             setLogs(json.data);
         } catch (e) {
@@ -62,20 +76,45 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchLogs();
-        const interval = setInterval(() => {
-            fetchLogs();
-        }, 30000);
+        const interval = setInterval(fetchLogs, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [startDate, endDate]);
 
     return (
         <div className="max-w-6xl mx-auto p-6 font-sans">
             <Header totalAmount={totalAmount} totalTransactions={logs.length}/>
             <div className="p-4 max-w-5xl mx-auto">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
-                    <h1 className="text-2xl font-bold">Transaction Dashboard</h1>
-
-                    <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col md:flex-row gap-2 md:items-end mb-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">เริ่มวันที่</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="block mt-1 px-2 py-1 border rounded"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700">ถึงวันที่</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="block mt-1 px-2 py-1 border rounded"
+                        />
+                    </div>
+                    <div className="self-end">
+                        <button
+                            onClick={fetchLogs}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                            Apply Filter
+                        </button>
+                    </div>
+                </div>
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold">Transaction History</h1>
+                    <div className="flex gap-2">
                         <button
                             onClick={fetchLogs}
                             disabled={loading}
