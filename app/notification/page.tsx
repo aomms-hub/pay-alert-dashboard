@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { getWebSocket } from "../config";
+import React, {useEffect, useState, useRef} from "react";
+import {motion, AnimatePresence} from "framer-motion";
+import {getWebSocket} from "../config";
 
 type Notification = {
     id: string;
@@ -15,40 +15,17 @@ type Notification = {
 export default function NotificationPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [readyToPlay, setReadyToPlay] = useState(false);
+    const [soundQueue, setSoundQueue] = useState<string[]>([]);
+    const [isPlaying, setIsPlaying] = useState(false);
     const ws = useRef<WebSocket | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const unlockAudio = () => {
         const audio = new Audio();
         audio.src = "";
-        audio.play().catch(() => {});
-    };
-
-    const playSound = (url: string) => {
-        console.log("Try to play sound:", url);
-
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-        }
-
-        const audio = new Audio(url);
-        audioRef.current = audio;
-
-        audio.addEventListener("canplaythrough", () => {
-            console.log("Audio ready, start playing");
-            audio.play()
-                .then(() => console.log("Audio playing started"))
-                .catch((err) => console.warn("Play failed:", err));
+        audio.play().catch(() => {
         });
-
-        audio.addEventListener("error", (e) => {
-            console.error("Audio error event:", e);
-        });
-
-        audio.load();
     };
-
     const connectWebSocket = () => {
         ws.current = new WebSocket(getWebSocket());
 
@@ -66,7 +43,7 @@ export default function NotificationPage() {
 
                 console.log("Received notification:", data);
                 if (readyToPlay && data.sound_url) {
-                    playSound(data.sound_url);
+                    setSoundQueue((queue) => [...queue, data.sound_url!]);
                 }
 
                 setNotifications((prev) => [data, ...prev].slice(0, 5));
@@ -83,7 +60,6 @@ export default function NotificationPage() {
             console.error("WebSocket error", error);
         };
     };
-
     useEffect(() => {
         if (readyToPlay) {
             connectWebSocket();
@@ -94,8 +70,34 @@ export default function NotificationPage() {
         };
     }, [readyToPlay]);
 
+    useEffect(() => {
+        if (!isPlaying && soundQueue.length > 0) {
+            const url = soundQueue[0];
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            setIsPlaying(true);
+
+            audio.addEventListener("ended", () => {
+                setIsPlaying(false);
+                setSoundQueue((queue) => queue.slice(1));
+            });
+
+            audio.addEventListener("error", () => {
+                setIsPlaying(false);
+                setSoundQueue((queue) => queue.slice(1));
+            });
+
+            audio.play().catch((err) => {
+                console.warn("Audio play failed:", err);
+                setIsPlaying(false);
+                setSoundQueue((queue) => queue.slice(1));
+            });
+        }
+    }, [soundQueue, isPlaying]);
+
     return (
-        <div className="max-w-xl mx-auto p-6 font-sans bg-gradient-to-r from-green-50 via-green-100 to-green-50 rounded-xl shadow-lg">
+        <div
+            className="max-w-xl mx-auto p-6 font-sans bg-gradient-to-r from-green-50 via-green-100 to-green-50 rounded-xl shadow-lg">
             <h1 className="text-4xl font-extrabold mb-6 text-green-900 tracking-wide drop-shadow-md">
                 🔔 Notification Dashboard
             </h1>
@@ -114,9 +116,9 @@ export default function NotificationPage() {
                     {notifications.length === 0 ? (
                         <motion.p
                             key="empty"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
+                            initial={{opacity: 0, y: 10}}
+                            animate={{opacity: 1, y: 0}}
+                            exit={{opacity: 0, y: -10}}
                             className="text-center text-green-700 italic select-none"
                         >
                             รอรับการแจ้งเตือน...
@@ -124,17 +126,17 @@ export default function NotificationPage() {
                     ) : (
                         <motion.ul
                             key="list"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
+                            initial={{opacity: 0}}
+                            animate={{opacity: 1}}
                             className="space-y-5"
                         >
-                            {notifications.map(({ id, amount, source, timestamp }) => (
+                            {notifications.map(({id, amount, source, timestamp}) => (
                                 <motion.li
                                     key={id}
-                                    initial={{ opacity: 0, x: -50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 50 }}
-                                    transition={{ duration: 0.4 }}
+                                    initial={{opacity: 0, x: -50}}
+                                    animate={{opacity: 1, x: 0}}
+                                    exit={{opacity: 0, x: 50}}
+                                    transition={{duration: 0.4}}
                                     className="p-5 bg-white rounded-lg shadow-md border border-green-200 hover:shadow-lg cursor-default select-text"
                                 >
                                     <p className="text-xl font-bold text-green-900 mb-1">
