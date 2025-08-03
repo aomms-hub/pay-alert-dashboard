@@ -113,7 +113,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold">Transaction Dashboard</h1>
+                    <h1 className="text-2xl font-bold">Transaction History</h1>
                     <div className="flex gap-2">
                         <button
                             onClick={fetchLogs}
